@@ -58,7 +58,7 @@ const Chatbot = () => {
       // Change this line - point to your actual backend URL
       const BACKEND_URL =
         import.meta.env.VITE_BACKEND_API_URL ||
-        "https://your-backend-domain.vercel.app";
+        "https://the-arc-backend1.vercel.app";
 
       const response = await fetch(`${BACKEND_URL}/api/chatbot`, {
         method: "POST",
