@@ -8,6 +8,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import "./Chatbot.css";
+import { sendChatMessage } from '../../../services/api';
 
 const Chatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -47,58 +48,35 @@ const Chatbot = () => {
     }
   }, [isOpen]);
 
-  const handleSendMessage = async (messageText = inputValue) => {
-    if (!messageText.trim() || isLoading) return;
+  const handleSendMessage = async () => {
+  if (!inputMessage.trim()) return;
 
-    const userMessage = {
-      type: "user",
-      content: messageText.trim(),
-      timestamp: new Date(),
-    };
+  const userMessage = inputMessage.trim();
+  setInputMessage('');
+  
+  // Add user message to chat
+  setMessages(prev => [...prev, { text: userMessage, sender: 'user' }]);
+  setIsTyping(true);
 
-    setMessages((prev) => [...prev, userMessage]);
-    setInputValue("");
-    setIsLoading(true);
-
-    try {
-      const response = await fetch("/api/chatbot", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          message: messageText.trim(),
-          chatHistory: messages,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      const botMessage = {
-        type: "bot",
-        content: data.response,
-        timestamp: new Date(),
-        suggestions: data.suggestions || [],
-      };
-
-      setMessages((prev) => [...prev, botMessage]);
-    } catch (error) {
-      console.error("Error sending message:", error);
-      const errorMessage = {
-        type: "bot",
-        content:
-          "I'm sorry, I encountered an error. Please try again or check if the backend server is running.",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  try {
+    // Call backend API
+    const response = await sendChatMessage(userMessage);
+    
+    // Add bot response to chat
+    setMessages(prev => [...prev, { 
+      text: response.reply || response.message || 'Sorry, I could not process your request.', 
+      sender: 'bot' 
+    }]);
+  } catch (error) {
+    console.error('Error sending message:', error);
+    setMessages(prev => [...prev, { 
+      text: 'Sorry, there was an error connecting to the chatbot. Please try again.', 
+      sender: 'bot' 
+    }]);
+  } finally {
+    setIsTyping(false);
+  }
+};
 
   const handleReset = () => {
     setMessages([
