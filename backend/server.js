@@ -18,7 +18,7 @@ const corsOptions = {
   origin: process.env.NODE_ENV === 'production' 
     ? [
         'https://the-arc-lvk8.onrender.com',
-        'https://the-arc-navy.vercel.app/',
+        'https://the-arc-navy.vercel.app',
         'https://www.your-frontend-domain.vercel.app'
       ]
     : ['http://localhost:5173', 'http://localhost:3000'],
