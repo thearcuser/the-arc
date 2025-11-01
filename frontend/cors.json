@@ -4,7 +4,9 @@
       "http://localhost:5173",
       "http://localhost:3000",
       "https://the-arc-woad.vercel.app",
-      "https://*.vercel.app"
+      "https://*.vercel.app",
+      "https://the-arc-backend1.vercel.app",
+      "https://the-arc-navy.vercel.app/"
     ],
     "method": ["GET", "POST", "PUT", "DELETE", "HEAD"],
     "maxAgeSeconds": 3600,
