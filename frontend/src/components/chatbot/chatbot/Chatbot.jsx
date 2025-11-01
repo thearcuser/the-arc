@@ -1,14 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
-import {
-  MessageCircle,
-  X,
-  Send,
-  RotateCcw,
-  Sparkles,
-} from "lucide-react";
+import { MessageCircle, X, Send, RotateCcw, Sparkles } from "lucide-react";
 import "./Chatbot.css";
-import { sendChatMessage } from '../../../services/api';
 
 const Chatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -48,35 +41,63 @@ const Chatbot = () => {
     }
   }, [isOpen]);
 
-  const handleSendMessage = async () => {
-  if (!inputMessage.trim()) return;
+  const handleSendMessage = async (messageText = inputValue) => {
+    if (!messageText.trim() || isLoading) return;
 
-  const userMessage = inputMessage.trim();
-  setInputMessage('');
-  
-  // Add user message to chat
-  setMessages(prev => [...prev, { text: userMessage, sender: 'user' }]);
-  setIsTyping(true);
+    const userMessage = {
+      type: "user",
+      content: messageText.trim(),
+      timestamp: new Date(),
+    };
 
-  try {
-    // Call backend API
-    const response = await sendChatMessage(userMessage);
-    
-    // Add bot response to chat
-    setMessages(prev => [...prev, { 
-      text: response.reply || response.message || 'Sorry, I could not process your request.', 
-      sender: 'bot' 
-    }]);
-  } catch (error) {
-    console.error('Error sending message:', error);
-    setMessages(prev => [...prev, { 
-      text: 'Sorry, there was an error connecting to the chatbot. Please try again.', 
-      sender: 'bot' 
-    }]);
-  } finally {
-    setIsTyping(false);
-  }
-};
+    setMessages((prev) => [...prev, userMessage]);
+    setInputValue("");
+    setIsLoading(true);
+
+    try {
+      // Change this line - point to your actual backend URL
+      const BACKEND_URL =
+        import.meta.env.VITE_BACKEND_API_URL ||
+        "https://your-backend-domain.vercel.app";
+
+      const response = await fetch(`${BACKEND_URL}/api/chatbot`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: messageText.trim(),
+          chatHistory: messages,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      const botMessage = {
+        type: "bot",
+        content: data.response,
+        timestamp: new Date(),
+        suggestions: data.suggestions || [],
+      };
+
+      setMessages((prev) => [...prev, botMessage]);
+    } catch (error) {
+      console.error("Error sending message:", error);
+      const errorMessage = {
+        type: "bot",
+        content:
+          "I'm sorry, I encountered an error. Please try again or check if the backend server is running.",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleReset = () => {
     setMessages([
@@ -128,7 +149,9 @@ const Chatbot = () => {
                 <Sparkles size={20} />
               </div>
               <div>
-                <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: "600" }}>
+                <h3
+                  style={{ margin: 0, fontSize: "1.1rem", fontWeight: "600" }}
+                >
                   The Arc Assistant
                 </h3>
                 <span style={{ fontSize: "0.85rem", opacity: 0.9 }}>
@@ -162,43 +185,71 @@ const Chatbot = () => {
                   <ReactMarkdown
                     components={{
                       // Customize how markdown elements are rendered
-                      p: ({ children }) => <p style={{ marginBottom: '0.5rem' }}>{children}</p>,
+                      p: ({ children }) => (
+                        <p style={{ marginBottom: "0.5rem" }}>{children}</p>
+                      ),
                       strong: ({ children }) => (
-                        <strong style={{ fontWeight: 700, color: message.type === 'bot' ? '#CF9FFF' : 'inherit' }}>
+                        <strong
+                          style={{
+                            fontWeight: 700,
+                            color:
+                              message.type === "bot" ? "#CF9FFF" : "inherit",
+                          }}
+                        >
                           {children}
                         </strong>
                       ),
                       em: ({ children }) => (
-                        <em style={{ fontStyle: 'italic' }}>{children}</em>
+                        <em style={{ fontStyle: "italic" }}>{children}</em>
                       ),
                       ul: ({ children }) => (
-                        <ul style={{ margin: '0.5rem 0', paddingLeft: '1.5rem' }}>{children}</ul>
+                        <ul
+                          style={{ margin: "0.5rem 0", paddingLeft: "1.5rem" }}
+                        >
+                          {children}
+                        </ul>
                       ),
                       ol: ({ children }) => (
-                        <ol style={{ margin: '0.5rem 0', paddingLeft: '1.5rem' }}>{children}</ol>
+                        <ol
+                          style={{ margin: "0.5rem 0", paddingLeft: "1.5rem" }}
+                        >
+                          {children}
+                        </ol>
                       ),
-                      li: ({ children }) => <li style={{ marginBottom: '0.25rem' }}>{children}</li>,
+                      li: ({ children }) => (
+                        <li style={{ marginBottom: "0.25rem" }}>{children}</li>
+                      ),
                       code: ({ inline, children }) =>
                         inline ? (
-                          <code style={{ 
-                            backgroundColor: message.type === 'bot' ? '#f3f4f6' : 'rgba(255,255,255,0.2)',
-                            padding: '2px 6px',
-                            borderRadius: '4px',
-                            fontSize: '0.875rem',
-                            fontFamily: "'Courier New', Courier, monospace"
-                          }}>
+                          <code
+                            style={{
+                              backgroundColor:
+                                message.type === "bot"
+                                  ? "#f3f4f6"
+                                  : "rgba(255,255,255,0.2)",
+                              padding: "2px 6px",
+                              borderRadius: "4px",
+                              fontSize: "0.875rem",
+                              fontFamily: "'Courier New', Courier, monospace",
+                            }}
+                          >
                             {children}
                           </code>
                         ) : (
-                          <code style={{
-                            display: 'block',
-                            backgroundColor: message.type === 'bot' ? '#f3f4f6' : 'rgba(255,255,255,0.2)',
-                            padding: '0.5rem',
-                            borderRadius: '6px',
-                            margin: '0.5rem 0',
-                            fontSize: '0.875rem',
-                            fontFamily: "'Courier New', Courier, monospace"
-                          }}>
+                          <code
+                            style={{
+                              display: "block",
+                              backgroundColor:
+                                message.type === "bot"
+                                  ? "#f3f4f6"
+                                  : "rgba(255,255,255,0.2)",
+                              padding: "0.5rem",
+                              borderRadius: "6px",
+                              margin: "0.5rem 0",
+                              fontSize: "0.875rem",
+                              fontFamily: "'Courier New', Courier, monospace",
+                            }}
+                          >
                             {children}
                           </code>
                         ),
@@ -251,8 +302,18 @@ const Chatbot = () => {
 
           {/* Suggested Questions (shown when only welcome message) */}
           {messages.length === 1 && (
-            <div className="initial-suggestions" style={{ padding: '0 1.5rem 1rem' }}>
-              <p style={{ fontSize: '0.875rem', color: '#4a5568', marginBottom: '0.5rem', fontWeight: 500 }}>
+            <div
+              className="initial-suggestions"
+              style={{ padding: "0 1.5rem 1rem" }}
+            >
+              <p
+                style={{
+                  fontSize: "0.875rem",
+                  color: "#4a5568",
+                  marginBottom: "0.5rem",
+                  fontWeight: 500,
+                }}
+              >
                 Quick questions to get started:
               </p>
               <div className="suggestions-grid">
