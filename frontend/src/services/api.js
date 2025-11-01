@@ -128,6 +128,30 @@ export const getInvestorProfile = async (investorId) => {
   }
 };
 
+const BACKEND_API_URL = import.meta.env.VITE_BACKEND_API_URL || 'https://the-arc-backend1.vercel.app/';
+
+export const sendChatMessage = async (message) => {
+  try {
+    const response = await fetch(`${BACKEND_API_URL}/api/chatbot`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ message })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error sending message:', error);
+    throw error;
+  }
+};
+
 // Export all API functions
 const api = {
   getUserProfile,
@@ -135,7 +159,8 @@ const api = {
   createStartup,
   getStartup,
   createInvestorProfile,
-  getInvestorProfile
+  getInvestorProfile,
+  sendChatMessage
 };
 
 export default api;
