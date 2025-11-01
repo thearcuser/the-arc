@@ -14,37 +14,6 @@ import {
   serverTimestamp,
   deleteDoc
 } from 'firebase/firestore';
-import { sendChatMessage } from '../../../services/api';
-
-const handleSendMessage = async () => {
-  if (!inputMessage.trim()) return;
-
-  const userMessage = inputMessage.trim();
-  setInputMessage('');
-  
-  // Add user message to chat
-  setMessages(prev => [...prev, { text: userMessage, sender: 'user' }]);
-  setIsTyping(true);
-
-  try {
-    // Call backend API
-    const response = await sendChatMessage(userMessage);
-    
-    // Add bot response to chat
-    setMessages(prev => [...prev, { 
-      text: response.reply || response.message || 'Sorry, I could not process your request.', 
-      sender: 'bot' 
-    }]);
-  } catch (error) {
-    console.error('Error sending message:', error);
-    setMessages(prev => [...prev, { 
-      text: 'Sorry, there was an error connecting to the chatbot. Please try again.', 
-      sender: 'bot' 
-    }]);
-  } finally {
-    setIsTyping(false);
-  }
-};
 
 // User API
 export const getUserProfile = async (userId) => {
